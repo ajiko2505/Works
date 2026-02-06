@@ -1,3 +1,13 @@
+echo '
+echo '
+echo '
+echo '
+
+<?php
+include("header.php");
+include("database.php");
+?>
+<style>
 body {
     min-height: 100vh;
     background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
