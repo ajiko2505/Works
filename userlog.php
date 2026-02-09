@@ -1,6 +1,12 @@
 <?php
 session_start();
 include("database.php");
+include("csrf.php");
+// Validate CSRF token
+if (!isset($_POST['csrf_token']) || !validate_csrf($_POST['csrf_token'])) {
+    header("Location: login.php?error=csrf");
+    exit();
+}
 if (isset($_POST['submit'])) {
     $usd = $_POST['email'];
     $pwd = $_POST['password'];

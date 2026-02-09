@@ -1,5 +1,12 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+include("csrf.php");
 include("database.php");
+// Validate CSRF token
+if (!isset($_POST['csrf_token']) || !validate_csrf($_POST['csrf_token'])) {
+    header("Location: signup.php?usser=csrf");
+    exit();
+}
 if (isset($_POST['submit'])) {
     $mail = $_POST['mail'];
     $fname = $_POST['fname'];

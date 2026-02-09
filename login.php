@@ -1,6 +1,7 @@
 
 <?php
 include("header.php");
+include("csrf.php");
 ?>
 <style>
 body {
@@ -130,6 +131,7 @@ body {
       }
     ?>
     <form method="POST" action="userlog.php" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
       <div class="form-floating mb-3">
         <input type="text" class="form-control" id="email" name="email" placeholder="Username" required>
         <label for="email"><i class="input-icon bi bi-person"></i>Username</label>

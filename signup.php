@@ -1,6 +1,7 @@
 
 <?php
 include("header.php");
+include("csrf.php");
 ?>
 
 <style>
@@ -122,6 +123,7 @@ body {
         }
     ?>
     <form method="POST" action="usersig.php" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
         <div class="form-floating mb-3">
             <input type="text" class="form-control" id="fname" name="fname" placeholder="Full Name" required>
             <label for="fname"><i class="input-icon bi bi-person"></i>Full Name</label>

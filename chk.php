@@ -22,32 +22,22 @@ if ($resultCheck > 0) {
            $name = $rows['name'];
            $date = Date('Y-m-d');
            if ($date > $due_date) {
-             // Sender and Email information
-$senderEmail='amvrs2023@gmail.com';
-$senderName='Admin';
-$replyTo='amvrs2023@gmail.com';
-$subJect='Vechicle Request Notification';
-$messageLetter='Hello '.$name. ', your vechicle request have been overdue please return';
+            // Sender and Email information (use mail_config.php for credentials)
+            include_once __DIR__ . '/mail_config.php';
+            $senderEmail = $MAIL_FROM;
+            $senderName = $MAIL_FROM_NAME;
+            $replyTo = $MAIL_FROM;
+            $subJect = 'Vehicle Request Notification';
+            $messageLetter = 'Hello ' . $name . ', your vehicle request is overdue; please return it.';
 
 // Target Email address
 $emailTarget=$email;
 
 // Buiding the email object attributes
+require 'PHPMailer\src\PHPMailer.php';
 $mail = new PHPMailer;
-
-// SMTP Configuration
-
-$mail->SMTPDebug = SMTP::DEBUG_SERVER; //Enable verbose debug output
-$mail->isSMTP(true); //Send using SMTP
-$mail->Host = 'smtp.gmail.com';
-$mail->SMTPAuth = true;
-$mail->Username = 'amvrs2023@gmail.com'; // SMTP username
-$mail->Password = 'edboeiwomemlhkne'; // The Google Application password
-$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; //Enable implicit TLS encryption
-$mail->Port = 587; //TCP port to connect to; 
-$mail->SMTPKeepAlive = true;
-
-// End Of SMTP Configuration
+// Apply centralized mail configuration
+apply_mail_config($mail);
 
 
 $mail->setFrom($senderEmail,$senderName);
