@@ -1,7 +1,8 @@
 <?php
-session_start(); 
+// Include security config first (headers, session, error handling)
+require_once __DIR__ . '/security_config.php';
 ?>
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8" />

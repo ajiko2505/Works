@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         verbose="true"
+         stopOnIncomplete="false"
+         stopOnSkipped="false"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="AMVRS ARMED Test Suite">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
+    </testsuites>
+    <coverage processUncoveredFiles="false">
+        <include>
+            <directory suffix=".php">.</directory>
+            <exclude>
+                <directory>vendor</directory>
+                <directory>tests</directory>
+                <directory>.git</directory>
+                <directory>.github</directory>
+            </exclude>
+        </include>
+        <report>
+            <html outputDirectory="build/coverage"/>
+            <text outputFile="php://stdout" showUncoveredFiles="false"/>
+        </report>
+    </coverage>
+</phpunit>

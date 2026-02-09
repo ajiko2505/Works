@@ -1,4 +1,7 @@
 <?php
+// Include security configuration first (headers, session, error handling)
+require_once __DIR__ . '/security_config.php';
+
 // Load simple .env if present (KEY=VALUE lines)
 $envFile = __DIR__ . '/.env';
 if (file_exists($envFile)) {
@@ -24,3 +27,6 @@ if (!$dbh) {
 	error_log('Database connection failed: ' . mysqli_connect_error());
 	die('Database connection failed. Check configuration.');
 }
+
+// Include helpers after database connection is established
+require_once __DIR__ . '/helpers.php';

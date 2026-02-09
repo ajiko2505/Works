@@ -1,49 +1,69 @@
 <?php
-include("database.php");
+if (session_status() === PHP_SESSION_NONE) session_start();
+require_once("database.php");
+
+// Require login
+require_login();
 
 if (isset($_POST['submit'])) {
-    $vech_no = $_POST['vech_no'];
-    $vech_name = $_POST['vech_name'];
-    $vech_col = $_POST['vech_col'];
-    $vech_desc = $_POST['description'];
-    $cat = $_POST['vec_cat'];
-    $file = $_FILES['file'];
-    $fileName = $file['name'];
-    $fileSize = $file['size'];
-    $fileTmp = $file['tmp_name'];
-    $fileError = $file['error'];
-    $fileType = $file['type'];
-    $fileExt = explode('.', $fileName);
-    $fileActExt = strtolower(end($fileExt));
-    $fileAllow = array('jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'Jpg', 'Jpeg');
-    $sqlChk = "SELECT * FROM vechicle WHERE vech_id='$vech_no' ";
-                    $result = mysqli_query($dbh, $sqlChk);
-                                $resultCheck = mysqli_num_rows($result);
-                                if ($resultCheck > 0) {
-                                    header("Location: register.php?usser=exist");
-                                }else {
-                                    if (in_array($fileActExt, $fileAllow)) {
-                        if ($fileError == 0) {
-                            if ($fileSize < 900000000) {
-                                $image = $vech_no.'.'.$fileActExt;
-                                $fileDes = "images/".$image;
-                                move_uploaded_file($fileTmp, $fileDes);
-                                        $status="free";
-                                        $sql = "INSERT INTO vechicle(vech_id, vech_name, vech_color, category, vech_img, vech_desc, status) VALUES('$vech_no','$vech_name','$vech_col','$cat', '$image','$vech_desc','$status')";
-                                        mysqli_query($dbh, $sql);
-                                        header("Location: register.php?usser=success");
-                                    }else {
-                                        header("Location: register.php?usser=size");
-                                        exit();
-                                    }
-                                }else {
-                                    header("Location: register.php?usser=error");
-                                    exit();
-                                }
-                            }else {
-                                header("Location: register.php?usser=type");
-                                exit();
-                            }
-                                }
-                                
+    // Validate input
+    $vech_no = validate_string($_POST['vech_no'] ?? '', 50);
+    $vech_name = validate_string($_POST['vech_name'] ?? '', 100);
+    $vech_col = validate_string($_POST['vech_col'] ?? '', 50);
+    $vech_desc = validate_string($_POST['description'] ?? '', 500);
+    $cat = validate_string($_POST['vec_cat'] ?? '', 50);
+    
+    // Check required fields
+    if (empty($vech_no) || empty($vech_name) || empty($vech_col) || empty($cat)) {
+        log_error('Input Validation Failed', 'Vehicle registration form missing required fields');
+        header("Location: register.php?error=invalid");
+        exit();
+    }
+    
+    // Check if vehicle already exists
+    $exists = query_count("SELECT id FROM vechicle WHERE vech_id = ?", array($vech_no));
+    
+    if ($exists > 0) {
+        log_action('vehicle_registration_duplicate', "Attempted duplicate vehicle registration: $vech_no");
+        header("Location: register.php?error=exist");
+        exit();
+    }
+    
+    // Handle file upload for vehicle image
+    $image = '';
+    if (isset($_FILES['vech_img']) && $_FILES['vech_img']['error'] === UPLOAD_ERR_OK) {
+        $temp_file = $_FILES['vech_img']['tmp_name'];
+        $filename = basename($_FILES['vech_img']['name']);
+        
+        // Validate file type (only images)
+        $allowed_types = array('image/jpeg', 'image/png', 'image/gif');
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $temp_file);
+        finfo_close($finfo);
+        
+        if (in_array($mime_type, $allowed_types)) {
+            // Store in images directory
+            $image = 'images/' . uniqid() . '_' . hash_file('sha256', $temp_file) . '.jpg';
+            move_uploaded_file($temp_file, $image);
+        }
+    }
+    
+    // Insert vehicle using prepared statement
+    $status = "free";
+    $result = execute(
+        "INSERT INTO vechicle(vech_id, vech_name, vech_color, category, vech_img, vech_desc, status) VALUES(?, ?, ?, ?, ?, ?, ?)",
+        array($vech_no, $vech_name, $vech_col, $cat, $image, $vech_desc, $status)
+    );
+    
+    if ($result !== false && $result > 0) {
+        log_action('vehicle_registered', "New vehicle registered: $vech_no ($vech_name)");
+        set_flash('success', "Vehicle '$vech_name' registered successfully!");
+        header("Location: register.php?success=1");
+        exit();
+    } else {
+        log_error('Database Error', 'Failed to insert vehicle', $vech_no);
+        header("Location: register.php?error=db");
+        exit();
+    }
 }
+?>
