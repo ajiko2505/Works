@@ -104,6 +104,17 @@ Notes & server setup:
 
 This workflow provides a safe, secret-backed deploy path. If you'd like an alternative (push Docker image to registry, GitHub Packages, or use a cloud provider action), tell me which target and I will add it.
 
+## Docker Image Publishing (GitHub Container Registry)
+
+There is a workflow `.github/workflows/publish-image.yml` that builds the project's `Dockerfile` and publishes an image to GitHub Container Registry (GHCR) on pushes to `main`.
+
+Image name and tags:
+- `ghcr.io/<owner>/<repo>:latest` — latest build
+- `ghcr.io/<owner>/<repo>:<commit-sha>` — commit-specific tag
+
+No additional secrets are required for GHCR publishing because the workflow uses `${{ secrets.GITHUB_TOKEN }}` with `packages: write` permissions. If you'd prefer Docker Hub instead, I can switch the workflow to use `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets.
+
+
 ## Docker Deployment
 
 ### Local Docker Testing
