@@ -79,6 +79,31 @@ The workflow file `.github/workflows/ci.yml` automatically runs on every push an
 - Secrets are never printed, even if you try to echo them
 - Logs are accessible only to contributors with repo access
 
+## GitHub Actions SSH Deploy
+
+The repository includes an SSH-based deploy workflow at `.github/workflows/deploy.yml`. It syncs the repository to a remote server using `rsync` over SSH and runs optional post-deploy commands.
+
+Add these repository secrets in GitHub Settings > Secrets & variables > Actions before using the workflow:
+
+- `SSH_PRIVATE_KEY` — the private key (PEM) for the deploy account on the target server.
+- `SSH_HOST` — server hostname or IP.
+- `SSH_USER` — remote account name.
+- `SSH_PORT` — optional SSH port (defaults to `22`).
+- `DEPLOY_PATH` — remote path to copy files into (e.g. `/var/www/html/amvrs`).
+- `RESTART_CMD` — optional remote command to run after deploy (e.g. `docker compose pull && docker compose up -d`).
+
+How it works:
+- The workflow runs on `push` to `main` and via manual `workflow_dispatch`.
+- It checks out the repo, installs `rsync`, loads the deploy SSH key from the `SSH_PRIVATE_KEY` secret, and uses `rsync` to sync files to the remote host.
+- The workflow excludes `.git` and `.env` by default. It then runs a small remote script to set permissions and optionally restart services (via `RESTART_CMD` or `systemctl`).
+
+Notes & server setup:
+- Ensure the deploy user has write access to `DEPLOY_PATH` and is allowed to run `sudo systemctl restart apache2` without an interactive password if you want automatic restarts.
+- Create the `.env` file directly on the server (never store real credentials in the repo).
+- Adjust `RESTART_CMD` to match your hosting (for Docker-based deployments you might use `docker compose pull && docker compose up -d`).
+
+This workflow provides a safe, secret-backed deploy path. If you'd like an alternative (push Docker image to registry, GitHub Packages, or use a cloud provider action), tell me which target and I will add it.
+
 ## Docker Deployment
 
 ### Local Docker Testing

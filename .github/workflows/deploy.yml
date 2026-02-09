@@ -1,0 +1,71 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Start SSH agent and add key
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add remote host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${SSH_PORT:-22} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync files to server
+        env:
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          RSYNC_EXCLUDES=(".git" ".env" "AMVRS ARMED.zip" "push-to-github.ps1")
+          EXCL_ARGS=( )
+          for e in "${RSYNC_EXCLUDES[@]}"; do EXCL_ARGS+=(--exclude="$e"); done
+          rsync -avz --delete "${EXCL_ARGS[@]}" -e "ssh -p ${SSH_PORT:-22}" ./ ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}
+
+      - name: Remote post-deploy commands
+        env:
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          RESTART_CMD: ${{ secrets.RESTART_CMD }}
+        run: |
+          echo "Running remote post-deploy commands..."
+          # Example commands: install deps, set permissions, restart services
+          ssh -p ${SSH_PORT:-22} ${SSH_USER}@${SSH_HOST} << 'EOF'
+            set -e
+            cd "${DEPLOY_PATH}"
+            # Ensure .env exists (optional)
+            if [ -f .env.example ] && [ ! -f .env ]; then
+              echo "WARNING: .env not found on server. Create it before going live."
+            fi
+            # Set permissions
+            chown -R www-data:www-data . || true
+            find . -type d -exec chmod 755 {} \; || true
+            find . -type f -exec chmod 644 {} \; || true
+            # Run user-provided restart command if supplied
+            if [ -n "${RESTART_CMD}" ]; then
+              echo "Executing restart command"
+              eval "${RESTART_CMD}"
+            fi
+            # Try to restart apache gracefully (works on Debian/Ubuntu)
+            if command -v systemctl >/dev/null 2>&1; then
+              sudo systemctl restart apache2 || echo "apache restart failed or not required"
+            fi
+          EOF
