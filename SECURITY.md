@@ -13,91 +13,159 @@ Important security considerations for development and deployment.
 ## Current Security Features
 
 ### Implemented
-✅ Password hashing (MD5 - see note below)  
-✅ Session-based authentication  
+✅ Password hashing (bcrypt via `password_hash()`)  
+✅ Session-based authentication with secure cookies  
 ✅ Role-based access control  
-✅ Basic input validation  
+✅ **Input validation helpers** (email, username, string, password, phone)  
+✅ **Prepared statements wrapper** functions  
+✅ **CSRF protection** on signup, login, and handlers  
+✅ **Comprehensive logging** (errors, audit trail)  
+✅ **Security headers** (CSP, X-Frame-Options, etc)  
 ✅ MySQL connection error handling  
+✅ Flash message system for user feedback  
+✅ **PHPUnit test suite** for validation functions
 
-## Known Vulnerabilities
+## New Security Helpers (`helpers.php`)
 
-⚠️ **CRITICAL ISSUES**
-
-### 1. MD5 Password Hashing (Use bcrypt/password_hash instead)
-**Current**: `MD5('password')`  
-**Recommended**: `password_hash($password, PASSWORD_BCRYPT)`
-
+### Input Validation Functions
 ```php
-// ✅ CORRECT
-$hashed = password_hash($password, PASSWORD_BCRYPT);
-if(password_verify($input_password, $hashed)) {
-    // Login successful
-}
+// Email validation
+validate_email('user@example.com');  // Returns email or empty
 
-// ❌ WRONG
-$hashed = MD5($password);
+// Username validation (alphanumeric, 3-20 chars)
+validate_username('john_doe');  // Returns username or empty
+
+// Password validation (8+ chars, upper, lower, digit)
+validate_password('SecurePass123');  // Returns bool
+
+// String sanitization
+validate_string($_POST['name'], 100);  // Max 100 chars, HTML-escaped
+
+// Integer validation
+validate_int($_GET['id']);  // Returns int or 0
+
+// Phone validation
+validate_phone('+1 (555) 123-4567');  // Returns phone or empty
 ```
 
-### 2. SQL Injection Risk
-**Current**: Direct string concatenation in queries  
-**Recommended**: Prepared statements
-
+### Prepared Statement Helpers
 ```php
-// ❌ VULNERABLE
-$query = "SELECT * FROM users WHERE username = '$username'";
+// SELECT single row
+$user = query_row("SELECT * FROM users WHERE id = ?", array($id));
 
-// ✅ SECURE
-$stmt = $dbh->prepare("SELECT * FROM users WHERE username = ?");
-$stmt->bind_param("s", $username);
-$stmt->execute();
-$result = $stmt->get_result();
+// SELECT all rows
+$users = query_all("SELECT * FROM users WHERE role = ?", array('admin'));
+
+// COUNT rows
+$count = query_count("SELECT id FROM requests WHERE status = ?", array('pending'));
+
+// INSERT/UPDATE/DELETE
+$affected = execute(
+    "INSERT INTO logs(user_id, action) VALUES(?, ?)",
+    array($user_id, 'login')
+);
 ```
 
-### 3. Missing CSRF Protection
-**Issue**: No CSRF tokens on forms  
-**Fix**: Add token generation and validation
-
+### Logging Functions
 ```php
-// Session start
-session_start();
+// Log error
+log_error('Database Error', 'Connection failed', mysqli_error($dbh));
 
-// Generate token
-if(empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
+// Log action (audit trail)
+log_action('user_login', "User $username logged in from $ip");
 
-// In form
-<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-
-// Validate on submission
-if($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    die('CSRF token validation failed');
-}
+// Get flash messages
+set_flash('success', 'Operation completed!');
+$messages = get_flash();  // Returns array, clears session
 ```
 
-### 4. No Input Validation
-**Issue**: User inputs not sanitized  
-**Fix**: Validate and escape
-
+### Security Helpers
 ```php
-// ✅ VALIDATE INPUT
-$username = trim($_POST['username'] ?? '');
-if(!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username)) {
-    die('Invalid username format');
-}
+// Check if user is logged in
+if (is_logged_in()) { ... }
 
-// ✅ ESCAPE OUTPUT
-echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8');
+// Check user role
+if (check_role('admin')) { ... }
+
+// Require authentication (exit if not logged in)
+require_login();
+
+// Require specific role (exit if unauthorized)
+require_role('admin');
+
+// Safe redirect (prevents open redirect)
+safe_redirect('users.php');
 ```
 
-### 5. Weak Session Security
-**Issue**: Sessions not secure from hijacking  
-**Fix**: Implement security measures
+## Known Vulnerabilities (Fixed)
 
+### ✅ FIXED: SQL Injection Risk
+**Before**: Direct string concatenation  
+**After**: All critical handlers now use prepared statements
+- `usersig.php` - User registration
+- `userlog.php` - User login
+- `userreg.php` - Vehicle registration
+- `userrequest.php` - Request creation
+
+### ✅ FIXED: Missing CSRF Protection
+**Status**: CSRF tokens added to signup, login forms, and all POST handlers  
+- `signup.php` - Registration form
+- `login.php` - Login form
+- All POST handlers validate tokens before processing
+
+### ✅ NEW: Input Validation
+**Status**: Comprehensive validation helpers in `helpers.php`
+- Email, username, password, phone validation
+- String sanitization with max length enforcement
+- Integer validation for IDs and counts
+
+### ✅ NEW: Security Logging
+**Status**: Error and audit logging implemented
+- All database errors logged to `logs/errors.log`
+- User actions logged to `logs/audit.log`
+- Login attempts (success/failure) logged
+- Form validation failures logged
+
+### ✅ NEW: Security Headers
+**Status**: Security headers configured in `security_config.php`
+- Content-Security-Policy (CSP) - prevent XSS
+- X-Frame-Options: SAMEORIGIN - prevent clickjacking
+- X-Content-Type-Options: nosniff - prevent MIME sniffing
+- Strict-Transport-Security (HSTS) - enforce HTTPS
+- Referrer-Policy - control referrer info
+
+## Remaining Issues to Address
+
+⚠️ **MEDIUM PRIORITY**
+
+### SQL Injection in Read Queries
+Some read-only queries in `index.php`, `users.php`, etc still use string concatenation:
 ```php
-// ✅ SECURE SESSION CONFIG
-session_set_cookie_params([
-    'lifetime' => 3600,
+// Should be updated to use query_all() / query_row()
+$sql = "SELECT * FROM request where user_id = '$a'";  // VULNERABLE
+```
+**Fix**: Update data retrieval queries to use the query helpers in `helpers.php`
+
+### Missing CSRF on Form Pages
+Some forms still lack CSRF tokens:
+- `request.php` - Vehicle request form
+- `register.php` - Vehicle registration form
+- `profile.php` / `profup.php` - Profile update forms
+
+**Fix**: Add `<input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">` to all forms
+
+### Session Fixation Risk
+Sessions should be regenerated on login/logout:
+```php
+// After successful login
+session_regenerate_id(true);
+
+// On logout
+session_destroy();
+```
+
+### No Rate Limiting
+No protection against brute force attacks (login, API endpoints)
     'path' => '/',
     'domain' => $_SERVER['HTTP_HOST'],
     'secure' => true,  // HTTPS only
