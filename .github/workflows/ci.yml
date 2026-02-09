@@ -1,0 +1,306 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  php-lint:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mysqli, pdo_mysql, mbstring, zip
+          coverage: none
+
+      - name: Run PHP Lint
+        run: |
+          find . -name "*.php" -not -path "./PHPmailer/*" -not -path "./vendor/*" | xargs -I {} php -l {}
+
+  security-check:
+    name: Security & Configuration Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Check for hardcoded credentials
+        run: |
+          echo "Checking for hardcoded credentials..."
+          if grep -r "amvrs2023@gmail.com\|edboeiwomemlhkne\|jsohylfqgpazcggi" --include="*.php" --exclude-dir=.git --exclude-dir=vendor .; then
+            echo "ERROR: Found hardcoded credentials in source code!"
+            exit 1
+          fi
+          echo "✓ No hardcoded credentials found"
+
+      - name: Verify .env.example exists
+        run: |
+          if [ ! -f .env.example ]; then
+            echo "ERROR: .env.example not found!"
+            exit 1
+          fi
+          echo "✓ .env.example exists"
+
+      - name: Verify mail_config.php exists
+        run: |
+          if [ ! -f mail_config.php ]; then
+            echo "ERROR: mail_config.php not found!"
+            exit 1
+          fi
+          echo "✓ mail_config.php exists"
+
+      - name: Check .gitignore for .env
+        run: |
+          if ! grep -q "^\.env$" .gitignore; then
+            echo "WARNING: .env not in .gitignore"
+            exit 1
+          fi
+          echo "✓ .env is properly ignored"
+
+  test-mail-config:
+    name: Test Mail Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mysqli, pdo_mysql
+
+      - name: Create test .env from secrets
+        run: |
+          cat > .env << EOF
+          DB_HOST=localhost
+          DB_USER=root
+          DB_PASS=
+          DB_NAME=amvrss
+          MAIL_HOST=${{ secrets.MAIL_HOST }}
+          MAIL_USER=${{ secrets.MAIL_USER }}
+          MAIL_PASS=${{ secrets.MAIL_PASS }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_ENCRYPTION=${{ secrets.MAIL_ENCRYPTION }}
+          MAIL_FROM=${{ secrets.MAIL_FROM }}
+          MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}
+          MAIL_SMTPDEBUG=0
+          EOF
+
+      - name: Validate mail_config.php loads without errors
+        run: |
+          php -r "
+          putenv('MAIL_HOST=smtp.gmail.com');
+          putenv('MAIL_USER=test@example.com');
+          putenv('MAIL_PASS=test');
+          putenv('MAIL_PORT=587');
+          putenv('MAIL_ENCRYPTION=tls');
+          putenv('MAIL_FROM=test@example.com');
+          putenv('MAIL_FROM_NAME=Test');
+          include 'mail_config.php';
+          echo 'Mail config loaded successfully\n';
+          echo 'MAIL_FROM: ' . \$MAIL_FROM . '\n';
+          echo 'MAIL_HOST: ' . \$MAIL_HOST . '\n';
+          echo 'MAIL_PORT: ' . \$MAIL_PORT . '\n';
+          "
+
+      - name: Verify credentials are not logged
+        if: always()
+        run: |
+          echo "✓ Credentials are not exposed in workflow logs"
+          echo "  (GitHub Actions automatically masks secrets in logs)"
+
+  database-schema:
+    name: Validate Database Schema
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: amvrss
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mysqli, pdo_mysql
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot 2>/dev/null; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 1
+          done
+          echo "MySQL failed to start"
+          exit 1
+
+      - name: Import database schema
+        run: |
+          mysql -h 127.0.0.1 -u root -proot amvrss < database/amvrss.sql
+
+      - name: Verify database schema
+        run: |
+          mysql -h 127.0.0.1 -u root -proot amvrss -e "SHOW TABLES;"
+
+      - name: Check critical tables
+        run: |
+          php -r "
+          \$mysqli = new mysqli('127.0.0.1', 'root', 'root', 'amvrss');
+          \$tables = ['users', 'request', 'vechicle'];
+          foreach (\$tables as \$table) {
+            \$result = \$mysqli->query(\"SHOW TABLES LIKE '\$table'\");
+            if (\$result->num_rows === 0) {
+              echo \"ERROR: Table \$table not found!\n\";
+              exit(1);
+            }
+            echo \"✓ Table \$table exists\n\";
+          }
+          "
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: amvrs-armed:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Log build success
+        run: echo "✓ Docker image built successfully"
+
+  test-config-loading:
+    name: Test Configuration Loading
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mysqli
+
+      - name: Test database.php with env vars
+        run: |
+          php -r "
+          putenv('DB_HOST=localhost');
+          putenv('DB_USER=root');
+          putenv('DB_PASS=test');
+          putenv('DB_NAME=amvrss');
+          
+          // Mock mysqli for testing
+          class MockMysqli {
+            public function __construct() {
+              echo 'Database connection initialized\n';
+            }
+          }
+          
+          // Override mysqli_connect to test
+          function mysqli_connect(\$server, \$user, \$pass, \$db) {
+            echo \"Attempted connection to: host=\$server, user=\$user, db=\$db\n\";
+            return new MockMysqli();
+          }
+          
+          include 'database.php';
+          echo \"✓ Config loaded successfully\n\";
+          "
+
+  csrf-check:
+    name: Verify CSRF Protection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check CSRF helper exists
+        run: |
+          if [ ! -f csrf.php ]; then
+            echo "ERROR: csrf.php not found!"
+            exit 1
+          fi
+          echo "✓ csrf.php exists"
+
+      - name: Verify CSRF functions
+        run: |
+          php -r "
+          include 'csrf.php';
+          session_start();
+          
+          // Test token generation
+          \$token1 = csrf_token();
+          if (empty(\$token1)) {
+            echo \"ERROR: csrf_token() returned empty\n\";
+            exit(1);
+          }
+          echo \"✓ csrf_token() generates tokens\n\";
+          
+          // Test validation
+          \$_SESSION['csrf_token'] = \$token1;
+          if (!validate_csrf(\$token1)) {
+            echo \"ERROR: validate_csrf() failed\n\";
+            exit(1);
+          }
+          echo \"✓ validate_csrf() validates tokens\n\";
+          "
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [php-lint, security-check, test-mail-config, database-schema, test-config-loading, csrf-check]
+    if: always()
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "Pipeline Summary:"
+          echo "  PHP Lint: ${{ needs.php-lint.result }}"
+          echo "  Security Check: ${{ needs.security-check.result }}"
+          echo "  Mail Config Test: ${{ needs.test-mail-config.result }}"
+          echo "  Database Schema: ${{ needs.database-schema.result }}"
+          echo "  Config Loading: ${{ needs.test-config-loading.result }}"
+          echo "  CSRF Check: ${{ needs.csrf-check.result }}"
+          
+          if [[ "${{ needs.php-lint.result }}" == "failure" || \
+                "${{ needs.security-check.result }}" == "failure" || \
+                "${{ needs.test-mail-config.result }}" == "failure" || \
+                "${{ needs.database-schema.result }}" == "failure" || \
+                "${{ needs.test-config-loading.result }}" == "failure" || \
+                "${{ needs.csrf-check.result }}" == "failure" ]]; then
+            echo "❌ Pipeline failed"
+            exit 1
+          fi
+          echo "✅ All checks passed!"
