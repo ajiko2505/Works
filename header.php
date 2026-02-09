@@ -11,13 +11,21 @@ require_once __DIR__ . '/security_config.php';
         <meta name="author" content="" />
         <title>AMVRS</title>
         <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-        <!-- Core theme CSS (includes Bootstrap)-->
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <!-- Bootstrap Icons -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" />
+        <!-- Core theme CSS -->
         <link href="css/styles.css" rel="stylesheet" />
         <link rel="stylesheet" type="text/css" href="css/index_style.css" />
         <link rel="stylesheet" type="text/css" href="css/global_styles.css" />
 		<link rel="stylesheet" type="text/css" href="css/form_styles.css" />
         <link rel="stylesheet" type="text/css" href="css/register_style.css" />
+        <!-- Modern UI Enhancements -->
+        <link rel="stylesheet" type="text/css" href="assets/css/modern_ui.css" />
         <script src="jquery.min.js"></script>
+        <!-- Bootstrap JS Bundle -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </head>
     <body>
 <?php

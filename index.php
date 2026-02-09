@@ -1,192 +1,305 @@
-echo '
-echo '
-echo '
-echo '
-
 <?php
 include("header.php");
 include("database.php");
 ?>
 <style>
-body {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-    background-attachment: fixed;
-}
-.main-section {
-    padding: 2.5rem 0 2rem 0;
-}
-.vehicle-card {
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
-    transition: transform 0.18s, box-shadow 0.18s;
-    border: none;
-    background: #fff;
-    margin-bottom: 2rem;
-}
-.vehicle-card:hover {
-    transform: translateY(-6px) scale(1.03);
-    box-shadow: 0 16px 40px 0 rgba(44,83,100,0.18);
-}
-.vehicle-img {
-    width: 100%;
-    max-width: 220px;
-    height: 140px;
-    object-fit: cover;
-    border-radius: 1rem;
-    margin: 0 auto 1rem auto;
-    display: block;
-    box-shadow: 0 2px 8px rgba(44,83,100,0.10);
-}
-.vehicle-title {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #2c5364;
-    margin-bottom: 0.5rem;
-}
-.vehicle-btn {
-    background: linear-gradient(90deg, #0f2027 0%, #2c5364 100%);
-    color: #fff;
-    border-radius: 1.2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    padding: 0.5rem 1.5rem;
-    border: none;
-    transition: background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(44,83,100,0.08);
-}
-.vehicle-btn:hover {
-    background: linear-gradient(90deg, #2c5364 0%, #0f2027 100%);
-    box-shadow: 0 4px 16px rgba(44,83,100,0.12);
-}
-.danger.text-danger, .success.text-success {
-    background: #ffeaea;
-    border-radius: 0.7rem;
-    padding: 0.7rem 1rem;
-    margin-bottom: 1rem;
-    color: #c0392b;
-    font-weight: 500;
-    text-align: center;
-}
-.success.text-success {
-    background: #eaffea;
-    color: #27ae60;
-}
-.main-logo {
-    display: block;
-    margin: 0 auto 1.2rem auto;
-    width: 90px;
-    height: 90px;
-    object-fit: contain;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(44,83,100,0.10);
-}
-.login-cards {
-    display: flex;
-    justify-content: center;
-    gap: 3rem;
-    margin-top: 3rem;
-}
-.login-card {
-    background: #fff;
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
-    padding: 2rem 2.5rem 1.5rem 2.5rem;
-    text-align: center;
-    transition: transform 0.18s, box-shadow 0.18s;
-    border: none;
-}
-.login-card:hover {
-    transform: translateY(-6px) scale(1.03);
-    box-shadow: 0 16px 40px 0 rgba(44,83,100,0.18);
-}
-.login-card img {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    border-radius: 50%;
-    margin-bottom: 1rem;
-}
-.login-card h2 {
-    font-size: 1.3rem;
-    color: #2c5364;
-    font-weight: 700;
-}
+    .dashboard-hero {
+        background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+        color: #fff;
+        padding: 3rem 0;
+        margin-bottom: 2.5rem;
+        border-radius: 1.5rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .dashboard-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+
+    .welcome-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1.5rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .vehicle-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .vehicle-status {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+    }
+
+    .vehicle-status i {
+        font-size: 1.2rem;
+        min-width: 24px;
+    }
+
+    .status-available {
+        color: #27ae60;
+    }
+
+    .status-reserved {
+        color: #f39c12;
+    }
+
+    .vehicle-specs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 0.8rem;
+    }
+
+    .spec-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .spec-item i {
+        color: #546de5;
+        font-size: 1.1rem;
+    }
+
+    .login-hero {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .login-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .login-option {
+        background: #fff;
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 4px 12px rgba(15, 32, 39, 0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .login-option:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 32px rgba(15, 32, 39, 0.15);
+    }
+
+    .login-icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 3rem;
+    }
+
+    .login-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f2027;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-desc {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: #cbd5e0;
+        margin-bottom: 1rem;
+    }
+
+    .empty-title {
+        font-size: 1.3rem;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-text {
+        color: #718096;
+    }
 </style>
-<div class="main-section container">
-  <img src="naf.png" alt="Logo" class="main-logo" />
-  <?php
-  if (isset($_SESSION['user_type'])) {
-    $user_id = $_SESSION['id'];
-    $sql = "SELECT * FROM vech_allocated WHERE user_id ='$user_id'";
-    $result = mysqli_query($dbh, $sql);
-    $resultCheck = mysqli_num_rows($result);
-    if ($resultCheck > 0) {
-        if ($rows = mysqli_fetch_assoc($result)) {
-            $duedate = $rows['due_date'];
-            $date = Date('Y-m-d');
-            if ($date  > $duedate  ) {
+
+<div class="container py-5">
+    <?php
+    if (isset($_SESSION['user_type'])) {
+        // User is logged in
+        $user_id = $_SESSION['id'];
+
+        // Get allocated vehicle info
+        $allocated = query_row("SELECT * FROM vech_allocated WHERE user_id = ?", array($user_id));
+        
+        if ($allocated) {
+            $duedate = $allocated['due_date'];
+            $date = date('Y-m-d');
+            if ($date > $duedate) {
                 header("Location: chk.php");
+                exit;
             }
         }
-    }
-    $sql = "SELECT * FROM vechicle WHERE status ='free'";
-    $result = mysqli_query($dbh, $sql);
-    $resultCheck = mysqli_num_rows($result);
-    echo '<div class="text-center mb-4"><h2 class="m-0" >Available Vehicles</h2></div>';
-    if (isset($_GET['user'])) {
-      $error = $_GET['user'];
-      if ($error =="request") {
-        echo '<div class="danger text-danger">User has a pending request</div>';
-      } elseif ($error=="success") {
-        echo '<div class="success text-success">User request is accepted and waiting Administrative action, you will receive email notification</div>';
-      } elseif ($error=="admin") {
-        echo '<div class="danger text-danger">Admin cannot make request</div>';
-      }
-    }
-    echo '<div class="row justify-content-center">';
-    if ($resultCheck > 0) {
-      while ($umm = mysqli_fetch_assoc($result)) {
-        $id = $umm['id'];
-        $vech_name  = $umm['vech_name'];
-        $vech_id  = $umm['vech_id'];
-        $vech_color  = $umm['vech_color'];
-        $category  = $umm['category'];
-        $vech_img  = $umm['vech_img'];
-        echo '<div class="col-md-4 d-flex align-items-stretch">';
-        echo '<div class="card vehicle-card w-100">';
-        echo '<div class="card-body text-center">';
-        echo '<h5 class="vehicle-title">'.$vech_name.'</h5>';
-        echo '<img class="vehicle-img" src="images/'.$vech_img.'" alt="'.$vech_name.'" />';
-        echo '<div class="mt-3"><a class="vehicle-btn btn" href="preview.php?id='.$vech_id.'">PREVIEW</a></div>';
-        echo '</div></div></div>';
-      }
+
+        // Display messages
+        if (isset($_GET['user'])) {
+            $error = $_GET['user'];
+            if ($error == "request") {
+                echo '<div class="alert alert-warning" role="alert">';
+                echo '<i class="bi bi-exclamation-circle me-2"></i> User has a pending request</div>';
+            } elseif ($error == "success") {
+                echo '<div class="alert alert-success" role="alert">';
+                echo '<i class="bi bi-check-circle me-2"></i> Request accepted! You will receive an email notification</div>';
+            } elseif ($error == "admin") {
+                echo '<div class="alert alert-danger" role="alert">';
+                echo '<i class="bi bi-exclamation-triangle me-2"></i> Admin cannot make vehicle requests</div>';
+            }
+        }
+
+        // Dashboard Hero
+        echo '<div class="dashboard-hero mb-5">';
+        echo '<div class="dashboard-header">';
+        echo '<div>';
+        echo '<h1 class="dashboard-title mb-2"><i class="bi bi-car-front"></i> Available Vehicles</h1>';
+        echo '<p class="dashboard-subtitle">Select a vehicle to submit your request</p>';
+        echo '</div>';
+        echo '<div class="welcome-badge"><i class="bi bi-person-circle me-2"></i> ' . htmlspecialchars($_SESSION['user_type'] ?? 'User') . '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        // Get available vehicles
+        $vehicles = query_all("SELECT * FROM vechicle WHERE status = 'free'");
+
+        if (!empty($vehicles)) {
+            echo '<div class="vehicle-grid">';
+            foreach ($vehicles as $vehicle) {
+                echo '<div class="card vehicle-card fade-in-up">';
+                echo '<div class="card-header">';
+                echo '<h5 class="mb-0">' . htmlspecialchars($vehicle['vech_name']) . '</h5>';
+                echo '</div>';
+                echo '<div class="card-body">';
+
+                // Vehicle Image
+                $image_path = 'images/' . htmlspecialchars($vehicle['vech_img']);
+                echo '<img src="' . $image_path . '" alt="' . htmlspecialchars($vehicle['vech_name']) . '" class="vehicle-img mb-3">';
+
+                // Status
+                echo '<div class="vehicle-status status-available">';
+                echo '<i class="bi bi-check-circle-fill"></i>';
+                echo '<span>Available for Request</span>';
+                echo '</div>';
+
+                // Specs
+                echo '<div class="vehicle-specs">';
+                echo '<div class="spec-item"><i class="bi bi-palette"></i> <span>Color: ' . htmlspecialchars($vehicle['vech_color']) . '</span></div>';
+                echo '<div class="spec-item"><i class="bi bi-tag"></i> <span>ID: ' . htmlspecialchars($vehicle['vech_id']) . '</span></div>';
+                echo '<div class="spec-item"><i class="bi bi-basket"></i> <span>Type: ' . htmlspecialchars($vehicle['category']) . '</span></div>';
+                echo '<div class="spec-item"><i class="bi bi-speedometer"></i> <span>Status: Available</span></div>';
+                echo '</div>';
+
+                // Description
+                if (!empty($vehicle['vech_desc'])) {
+                    echo '<p class="text-muted small mb-3">' . htmlspecialchars(substr($vehicle['vech_desc'], 0, 100)) . '...</p>';
+                }
+
+                // Actions
+                echo '<div class="d-grid gap-2">';
+                echo '<a href="preview.php?id=' . htmlspecialchars($vehicle['vech_id']) . '" class="btn btn-primary">';
+                echo '<i class="bi bi-eye me-2"></i> View & Request';
+                echo '</a>';
+                echo '</div>';
+                echo '</div>';
+                echo '</div>';
+            }
+            echo '</div>';
+        } else {
+            echo '<div class="card empty-state">';
+            echo '<div class="empty-icon"><i class="bi bi-inbox"></i></div>';
+            echo '<h4 class="empty-title">No Vehicles Available</h4>';
+            echo '<p class="empty-text">Check back later for available vehicles.</p>';
+            echo '</div>';
+        }
     } else {
-      echo '<div class="my-3 py-2 text-center w-100"><h3 class="m-0">No Available Vehicles</h3></div>';
+        // User not logged in - show login options
+        echo '<div class="login-hero">';
+        echo '<img src="naf.png" alt="AMVRS Logo" class="mb-4" style="max-width: 100px; height: auto;">';
+        echo '<h1 class="mb-2" style="font-size: 2rem; font-weight: 700; color: #0f2027;">AMVRS ARMED System</h1>';
+        echo '<p class="text-muted" style="font-size: 1.1rem;">Automated Military Vehicle Request System</p>';
+        echo '</div>';
+
+        echo '<div class="login-grid">';
+
+        // Driver Login Option
+        echo '<a href="login.php" class="login-option">';
+        echo '<div class="login-icon">';
+        echo '<i class="bi bi-person-badge"></i>';
+        echo '</div>';
+        echo '<h3 class="login-title">Driver Login</h3>';
+        echo '<p class="login-desc">Access your vehicle requests and manage your profile</p>';
+        echo '</a>';
+
+        // Admin Login Option
+        echo '<a href="login.php" class="login-option">';
+        echo '<div class="login-icon">';
+        echo '<i class="bi bi-shield-lock"></i>';
+        echo '</div>';
+        echo '<h3 class="login-title">Admin Login</h3>';
+        echo '<p class="login-desc">Manage vehicle fleet and approve requests</p>';
+        echo '</a>';
+
+        // Sign Up Option
+        echo '<a href="signup.php" class="login-option">';
+        echo '<div class="login-icon">';
+        echo '<i class="bi bi-person-plus"></i>';
+        echo '</div>';
+        echo '<h3 class="login-title">New User</h3>';
+        echo '<p class="login-desc">Create a new account to get started</p>';
+        echo '</a>';
+
+        echo '</div>';
     }
-    echo '</div>';
-  } else {
-    echo '<div class="login-cards">';
-    echo '<div class="login-card">';
-    echo '<a href="login.php"><img src="driver.png" alt="Driver Login" /><h2>Driver Login</h2></a>';
-    echo '</div>';
-    echo '<div class="login-card">';
-    echo '<a id="admin-link" href="login.php"><img src="admin.png" alt="Admin Login" /><h2>Admin Login</h2></a>';
-    echo '</div>';
-    echo '</div>';
-  }
-  ?>
+    ?>
 </div>
+
 <script src="bootstrap.bundle.min.js"></script>
 <script src="js/scripts.js"></script>
 </body>
 </html>
-    </body>
-</html>
-
-
-
-
-
-
-
