@@ -1,4 +1,15 @@
 <?php
+/**
+ * User Login Handler
+ *
+ * Handles user authentication with input validation, CSRF protection,
+ * password verification using bcrypt, and session management.
+ *
+ * @author AMVRS ARMED Development Team
+ * @version 1.0.0
+ * @package AMVRS ARMED
+ */
+
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once("csrf.php");
 require_once("database.php");

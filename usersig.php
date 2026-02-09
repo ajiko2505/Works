@@ -1,4 +1,15 @@
 <?php
+/**
+ * User Registration Handler
+ *
+ * Handles new user registration with input validation, CSRF protection,
+ * password strength checking, and duplicate user detection.
+ *
+ * @author AMVRS ARMED Development Team
+ * @version 1.0.0
+ * @package AMVRS ARMED
+ */
+
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once("csrf.php");
 require_once("database.php");

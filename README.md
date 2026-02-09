@@ -87,6 +87,18 @@ Works/
  PHPmailer/             
 \\\
 
+##  Documentation
+
+Comprehensive documentation is available:
+
+- **[CODE_STANDARDS.md](CODE_STANDARDS.md)** - Coding standards, PSR-12 compliance, naming conventions, security practices
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture, technology stack, component structure, database schema
+- **[SECURITY.md](SECURITY.md)** - Security policy, vulnerability reporting, security measures
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines, pull request process, code review
+- **[INSTALLATION.md](INSTALLATION.md)** - Detailed setup instructions
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment and CI/CD
+- **[IMPROVEMENTS.md](IMPROVEMENTS.md)** - Recent improvements and changes
+
 ##  Configuration
 
 ### Database

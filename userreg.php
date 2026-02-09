@@ -1,4 +1,15 @@
 <?php
+/**
+ * Vehicle Registration Handler
+ *
+ * Handles vehicle registration for users with input validation,
+ * image upload processing, and database storage.
+ *
+ * @author AMVRS ARMED Development Team
+ * @version 1.0.0
+ * @package AMVRS ARMED
+ */
+
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once("database.php");
 
