@@ -1,11 +1,11 @@
 <?php
 include("database.php");
 
-use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
 
 // Use SMTP
-use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 require 'PHPMailer\src\Exception.php';
 require 'PHPMailer\src\PHPMailer.php';
 require 'PHPMailer\src\SMTP.php';
